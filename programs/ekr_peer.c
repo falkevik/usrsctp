@@ -449,7 +449,7 @@ main(int argc, char *argv[])
 #endif
 	usrsctp_register_address((void *)&fd);
 	usrsctp_sysctl_set_sctp_ecn_enable(0);
-	if ((s = usrsctp_socket(AF_CONN, SOCK_STREAM, IPPROTO_SCTP, receive_cb, NULL, 0, &fd)) == NULL) {
+	if ((s = usrsctp_socket(AF_CONN, SOCK_STREAM, IPPROTO_SCTP, receive_cb, NULL, 0, &fd, 0)) == NULL) {
 		perror("usrsctp_socket");
 	}
 	/* Enable the events of interest. */

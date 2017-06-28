@@ -81,7 +81,7 @@ main(int argc, char *argv[])
 #endif
 	usrsctp_sysctl_set_sctp_blackhole(2);
 
-	if ((sock = usrsctp_socket(AF_INET, SOCK_STREAM, IPPROTO_SCTP, NULL, NULL, 0, NULL)) == NULL) {
+	if ((sock = usrsctp_socket(AF_INET, SOCK_STREAM, IPPROTO_SCTP, NULL, NULL, 0, NULL, 0)) == NULL) {
 		perror("usrsctp_socket");
 	}
 	if (argc > 2) {

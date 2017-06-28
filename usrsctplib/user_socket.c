@@ -1284,6 +1284,7 @@ socreate(int dom, struct socket **aso, int type, int proto)
 	so->so_type = type;
 	so->so_count = 1;
 	so->so_dom = dom;
+
 	/*
 	 * Auto-sizing of socket buffers is managed by the protocols and
 	 * the appropriate flags must be set in the pru_attach function.
@@ -1413,7 +1414,8 @@ usrsctp_socket(int domain, int type, int protocol,
                                  size_t datalen, struct sctp_rcvinfo, int flags, void *ulp_info),
 	       int (*send_cb)(struct socket *sock, uint32_t sb_free),
 	       uint32_t sb_threshold,
-	       void *ulp_info)
+	       void *ulp_info,
+	       int notif_fd)
 {
 	struct socket *so;
 
@@ -1442,6 +1444,7 @@ usrsctp_socket(int domain, int type, int protocol,
 	register_recv_cb(so, receive_cb);
 	register_send_cb(so, sb_threshold, send_cb);
 	register_ulp_info(so, ulp_info);
+	register_set_notif_fd(so, notif_fd?1:0, notif_fd);
 	return (so);
 }
 

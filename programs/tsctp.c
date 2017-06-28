@@ -591,24 +591,24 @@ int main(int argc, char **argv)
 
 	if (client) {
 		if (use_cb) {
-			if (!(psock = usrsctp_socket(AF_INET, SOCK_STREAM, IPPROTO_SCTP, client_receive_cb, send_cb, length, NULL))) {
+			if (!(psock = usrsctp_socket(AF_INET, SOCK_STREAM, IPPROTO_SCTP, client_receive_cb, send_cb, length, NULL, 0))) {
 				perror("user_socket");
 				exit(1);
 			}
 		} else {
-			if (!(psock = usrsctp_socket(AF_INET, SOCK_STREAM, IPPROTO_SCTP, NULL, NULL, 0, NULL))) {
+			if (!(psock = usrsctp_socket(AF_INET, SOCK_STREAM, IPPROTO_SCTP, NULL, NULL, 0, NULL, 0))) {
 				perror("user_socket");
 				exit(1);
 			}
 		}
 	} else {
 		if (use_cb) {
-			if (!(psock = usrsctp_socket(AF_INET, SOCK_STREAM, IPPROTO_SCTP, server_receive_cb, NULL, 0, NULL))) {
+			if (!(psock = usrsctp_socket(AF_INET, SOCK_STREAM, IPPROTO_SCTP, server_receive_cb, NULL, 0, NULL, 0))) {
 				perror("user_socket");
 				exit(1);
 			}
 		} else {
-			if (!(psock = usrsctp_socket(AF_INET, SOCK_STREAM, IPPROTO_SCTP, NULL, NULL, 0, NULL))) {
+			if (!(psock = usrsctp_socket(AF_INET, SOCK_STREAM, IPPROTO_SCTP, NULL, NULL, 0, NULL, 0))) {
 				perror("user_socket");
 				exit(1);
 			}

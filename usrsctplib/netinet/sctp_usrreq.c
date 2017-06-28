@@ -4402,6 +4402,28 @@ sctp_getopt(struct socket *so, int optname, void *optval, size_t *optsize,
 		}
 		break;
 	}
+	case SCTP_NOTIF_FD:
+	{
+		int fd;
+
+		if (*optsize < sizeof(int)) {
+			SCTP_LTRACE_ERR_RET(inp, NULL, NULL, SCTP_FROM_SCTP_USRREQ, EINVAL);
+			error = EINVAL;
+		} else {
+			SCTP_INP_RLOCK(inp);
+			if (inp->use_notif_fd) {
+			    fd = inp->notif_fd;
+			} else {
+			    fd = -1;
+			}
+			SCTP_INP_RUNLOCK(inp);
+		}
+		if (error == 0) {
+		    *(int *)optval = fd;
+		    *optsize = sizeof(int);
+		}
+		break;
+	}
 	default:
 		SCTP_LTRACE_ERR_RET(inp, NULL, NULL, SCTP_FROM_SCTP_USRREQ, ENOPROTOOPT);
 		error = ENOPROTOOPT;
@@ -7633,6 +7655,21 @@ sctp_setopt(struct socket *so, int optname, void *optval, size_t optsize,
 		}
 		break;
 	}
+	case SCTP_NOTIF_FD:
+	{
+		int *fd;
+
+		SCTP_CHECK_AND_CAST(fd, optval, int, optsize);
+		SCTP_INP_WLOCK(inp);
+		if (*fd > 0) {
+			inp->use_notif_fd = 1;
+			inp->notif_fd = *fd;
+		} else {
+			inp->use_notif_fd = 0;
+		}
+		SCTP_INP_WUNLOCK(inp);
+		break;
+	}
 	default:
 		SCTP_LTRACE_ERR_RET(inp, NULL, NULL, SCTP_FROM_SCTP_USRREQ, ENOPROTOOPT);
 		error = ENOPROTOOPT;
@@ -8986,4 +9023,23 @@ register_ulp_info (struct socket *so, void *ulp_info)
 	SCTP_INP_WUNLOCK(inp);
 	return (1);
 }
+
+int
+register_set_notif_fd (struct socket *so, char usefd, int fd)
+{
+	struct sctp_inpcb *inp;
+
+	SCTPDBG(SCTP_DEBUG_PCB1, "register_set_notif_fd\n");
+
+	inp = (struct sctp_inpcb *) so->so_pcb;
+	if (inp == NULL) {
+		return (0);
+	}
+	SCTP_INP_WLOCK(inp);
+	inp->use_notif_fd = usefd;
+	inp->notif_fd = fd;
+	SCTP_INP_WUNLOCK(inp);
+	return (1);
+}
+
 #endif

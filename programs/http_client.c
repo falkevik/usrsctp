@@ -118,7 +118,7 @@ main(int argc, char *argv[])
 
 	usrsctp_sysctl_set_sctp_blackhole(2);
 
-	if ((sock = usrsctp_socket(AF_INET6, SOCK_STREAM, IPPROTO_SCTP, receive_cb, NULL, 0, NULL)) == NULL) {
+	if ((sock = usrsctp_socket(AF_INET6, SOCK_STREAM, IPPROTO_SCTP, receive_cb, NULL, 0, NULL, 0)) == NULL) {
 		perror("usrsctp_socket");
 		result = 1;
 		goto out;

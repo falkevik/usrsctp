@@ -410,7 +410,7 @@ main(void)
 	usrsctp_sysctl_set_sctp_ecn_enable(0);
 	usrsctp_register_address((void *)&fd_c);
 	usrsctp_register_address((void *)&fd_s);
-	if ((s_c = usrsctp_socket(AF_CONN, SOCK_STREAM, IPPROTO_SCTP, receive_cb, NULL, 0, &fd_c)) == NULL) {
+	if ((s_c = usrsctp_socket(AF_CONN, SOCK_STREAM, IPPROTO_SCTP, receive_cb, NULL, 0, &fd_c, 0)) == NULL) {
 		perror("usrsctp_socket");
 		exit(EXIT_FAILURE);
 	}
@@ -433,7 +433,7 @@ main(void)
 		exit(EXIT_FAILURE);
 	}
 	printf("to %d.\n", cur_buf_size);
-	if ((s_l = usrsctp_socket(AF_CONN, SOCK_STREAM, IPPROTO_SCTP, receive_cb, NULL, 0, &fd_s)) == NULL) {
+	if ((s_l = usrsctp_socket(AF_CONN, SOCK_STREAM, IPPROTO_SCTP, receive_cb, NULL, 0, &fd_s, 0)) == NULL) {
 		perror("usrsctp_socket");
 		exit(EXIT_FAILURE);
 	}

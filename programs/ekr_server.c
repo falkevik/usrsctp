@@ -250,7 +250,7 @@ main(int argc, char *argv[])
 #else
 	pthread_create(&tid, NULL, &handle_packets, (void *)&fd);
 #endif
-	if ((s = usrsctp_socket(AF_CONN, SOCK_STREAM, IPPROTO_SCTP, receive_cb, NULL, 0, NULL)) == NULL) {
+	if ((s = usrsctp_socket(AF_CONN, SOCK_STREAM, IPPROTO_SCTP, receive_cb, NULL, 0, NULL, 0)) == NULL) {
 		perror("usrsctp_socket");
 	}
 	memset(&sconn, 0, sizeof(struct sockaddr_conn));

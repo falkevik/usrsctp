@@ -540,6 +540,7 @@ struct sctp_event_subscribe {
 #define SCTP_DEFAULT_SNDINFO            0x00000021
 #define SCTP_DEFAULT_PRINFO             0x00000022
 #define SCTP_REMOTE_UDP_ENCAPS_PORT     0x00000024
+#define SCTP_NOTIF_FD                   0x00000033
 
 #define SCTP_ENABLE_STREAM_RESET        0x00000900 /* struct sctp_assoc_value */
 
@@ -881,7 +882,8 @@ usrsctp_socket(int domain, int type, int protocol,
                                  size_t datalen, struct sctp_rcvinfo, int flags, void *ulp_info),
                int (*send_cb)(struct socket *sock, uint32_t sb_free),
                uint32_t sb_threshold,
-               void *ulp_info);
+               void *ulp_info,
+	       int notif_fd);
 
 int
 usrsctp_setsockopt(struct socket *so,

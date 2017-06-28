@@ -55,10 +55,133 @@ int done = 0;
 typedef char* caddr_t;
 #endif
 
+static void
+handle_association_change_event(struct sctp_assoc_change *sac)
+{
+	unsigned int i, n;
+
+	printf("Association change ");
+	switch (sac->sac_state) {
+	case SCTP_COMM_UP:
+		printf("SCTP_COMM_UP");
+		break;
+	case SCTP_COMM_LOST:
+		printf("SCTP_COMM_LOST");
+		break;
+	case SCTP_RESTART:
+		printf("SCTP_RESTART");
+		break;
+	case SCTP_SHUTDOWN_COMP:
+		printf("SCTP_SHUTDOWN_COMP");
+		break;
+	case SCTP_CANT_STR_ASSOC:
+		printf("SCTP_CANT_STR_ASSOC");
+		break;
+	default:
+		printf("UNKNOWN");
+		break;
+	}
+	printf(", streams (in/out) = (%u/%u)",
+	       sac->sac_inbound_streams, sac->sac_outbound_streams);
+	n = sac->sac_length - sizeof(struct sctp_assoc_change);
+	if (((sac->sac_state == SCTP_COMM_UP) ||
+	     (sac->sac_state == SCTP_RESTART)) && (n > 0)) {
+		printf(", supports");
+		for (i = 0; i < n; i++) {
+			switch (sac->sac_info[i]) {
+			case SCTP_ASSOC_SUPPORTS_PR:
+				printf(" PR");
+				break;
+			case SCTP_ASSOC_SUPPORTS_AUTH:
+				printf(" AUTH");
+				break;
+			case SCTP_ASSOC_SUPPORTS_ASCONF:
+				printf(" ASCONF");
+				break;
+			case SCTP_ASSOC_SUPPORTS_MULTIBUF:
+				printf(" MULTIBUF");
+				break;
+			case SCTP_ASSOC_SUPPORTS_RE_CONFIG:
+				printf(" RE-CONFIG");
+				break;
+			default:
+				printf(" UNKNOWN(0x%02x)", sac->sac_info[i]);
+				break;
+			}
+		}
+	} else if (((sac->sac_state == SCTP_COMM_LOST) ||
+	            (sac->sac_state == SCTP_CANT_STR_ASSOC)) && (n > 0)) {
+		printf(", ABORT =");
+		for (i = 0; i < n; i++) {
+			printf(" 0x%02x", sac->sac_info[i]);
+		}
+	}
+	printf(".\n");
+	if ((sac->sac_state == SCTP_CANT_STR_ASSOC) ||
+	    (sac->sac_state == SCTP_SHUTDOWN_COMP) ||
+	    (sac->sac_state == SCTP_COMM_LOST)) {
+		exit(0);
+	}
+	return;
+}
+
+static void
+handle_notification(union sctp_notification *notif, size_t n)
+{
+	if (notif->sn_header.sn_length != (uint32_t)n) {
+		return;
+	}
+	switch (notif->sn_header.sn_type) {
+	case SCTP_ASSOC_CHANGE:
+		handle_association_change_event(&(notif->sn_assoc_change));
+		break;
+	case SCTP_PEER_ADDR_CHANGE:
+		printf("addr change\n");
+		//handle_peer_address_change_event(&(notif->sn_paddr_change));
+		break;
+	case SCTP_REMOTE_ERROR:
+		printf("remote error\n");
+		break;
+	case SCTP_SHUTDOWN_EVENT:
+		printf("shotdown event\n");
+		break;
+	case SCTP_ADAPTATION_INDICATION:
+		printf("ADAPTATION_INDICATION\n");
+		break;
+	case SCTP_PARTIAL_DELIVERY_EVENT:
+		printf("SCTP_PARTIAL_DELIVERY_EVENT\n");
+		break;
+	case SCTP_AUTHENTICATION_EVENT:
+		break;
+	case SCTP_SENDER_DRY_EVENT:
+		break;
+	case SCTP_NOTIFICATIONS_STOPPED_EVENT:
+		break;
+	case SCTP_SEND_FAILED_EVENT:
+		printf("SCTP_SEND_FAILED_EVENT\n");
+		//handle_send_failed_event(&(notif->sn_send_failed_event));
+		break;
+	case SCTP_STREAM_RESET_EVENT:
+		break;
+	case SCTP_ASSOC_RESET_EVENT:
+		break;
+	case SCTP_STREAM_CHANGE_EVENT:
+		break;
+	default:
+		break;
+	}
+}
+
 static int
 receive_cb(struct socket *sock, union sctp_sockstore addr, void *data,
            size_t datalen, struct sctp_rcvinfo rcv, int flags, void *ulp_info)
 {
+	printf("receive callback called!\n");
+	
+	if (flags & MSG_NOTIFICATION) {
+	    handle_notification((union sctp_notification *)data, datalen);
+	}
+
 	if (data == NULL) {
 		done = 1;
 		usrsctp_close(sock);
@@ -96,7 +219,11 @@ main(int argc, char *argv[])
 	struct sctpstat stat;
 	char buffer[80];
 	int i, n;
-
+	struct sctp_event event;
+	uint16_t event_types[] = {SCTP_ASSOC_CHANGE,
+	                          SCTP_PEER_ADDR_CHANGE,
+	                          SCTP_SEND_FAILED_EVENT};
+	
 	if (argc < 3) {
 		printf("%s", "Usage: client remote_addr remote_port local_port local_encaps_port remote_encaps_port\n");
 		return (-1);
@@ -107,12 +234,25 @@ main(int argc, char *argv[])
 		usrsctp_init(9899, NULL, debug_printf);
 	}
 #ifdef SCTP_DEBUG
-	usrsctp_sysctl_set_sctp_debug_on(SCTP_DEBUG_NONE);
+	usrsctp_sysctl_set_sctp_debug_on(SCTP_DEBUG_ALL);
 #endif
 	usrsctp_sysctl_set_sctp_blackhole(2);
-	if ((sock = usrsctp_socket(AF_INET6, SOCK_STREAM, IPPROTO_SCTP, receive_cb, NULL, 0, NULL)) == NULL) {
+	if ((sock = usrsctp_socket(AF_INET6, SOCK_STREAM, IPPROTO_SCTP, receive_cb, NULL, 0, NULL, 0)) == NULL) {
 		perror("usrsctp_socket");
 	}
+	usrsctp_set_non_blocking(sock, 1);
+	
+	memset(&event, 0, sizeof(event));
+	event.se_assoc_id = SCTP_ALL_ASSOC;
+	event.se_on = 1;
+	for (i = 0; i < sizeof(event_types)/sizeof(uint16_t); i++) {
+		event.se_type = event_types[i];
+		if (usrsctp_setsockopt(sock, IPPROTO_SCTP, SCTP_EVENT, &event, sizeof(event)) < 0) {
+			perror("setsockopt SCTP_EVENT");
+		}
+	}
+
+	
 	if (argc > 3) {
 		memset((void *)&addr6, 0, sizeof(struct sockaddr_in6));
 #ifdef HAVE_SIN6_LEN

@@ -1730,8 +1730,10 @@ sctp_process_cookie_existing(struct mbuf *m, int iphlen, int offset,
 				 * don't double things
 				 */
 				net->hb_responded = 1;
+				struct timeval told;
+				told = cookie->time_entered;
 				net->RTO = sctp_calculate_rto(stcb, asoc, net,
-							      &cookie->time_entered,
+							      &told,
 							      sctp_align_unsafe_makecopy,
 							      SCTP_RTT_FROM_NON_DATA);
 
@@ -2482,8 +2484,10 @@ sctp_process_cookie_new(struct mbuf *m, int iphlen, int offset,
 	(void)SCTP_GETTIME_TIMEVAL(&stcb->asoc.time_entered);
 	if ((netp != NULL) && (*netp != NULL)) {
 		/* calculate the RTT and set the encaps port */
+		struct timeval told;
+		told = cookie->time_entered;
 		(*netp)->RTO = sctp_calculate_rto(stcb, asoc, *netp,
-						  &cookie->time_entered, sctp_align_unsafe_makecopy,
+						  &told, sctp_align_unsafe_makecopy,
 						  SCTP_RTT_FROM_NON_DATA);
 	}
 	/* respond with a COOKIE-ACK */

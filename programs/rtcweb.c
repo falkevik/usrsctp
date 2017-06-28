@@ -1331,7 +1331,7 @@ main(int argc, char *argv[])
 #endif
 	usrsctp_sysctl_set_sctp_blackhole(2);
 
-	if ((sock = usrsctp_socket(AF_INET, SOCK_STREAM, IPPROTO_SCTP, receive_cb, NULL, 0, &peer_connection)) == NULL) {
+	if ((sock = usrsctp_socket(AF_INET, SOCK_STREAM, IPPROTO_SCTP, receive_cb, NULL, 0, &peer_connection, 0)) == NULL) {
 		perror("socket");
 	}
 	init_peer_connection(&peer_connection);
