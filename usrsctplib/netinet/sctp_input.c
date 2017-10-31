@@ -89,6 +89,35 @@ sctp_stop_all_cookie_timers(struct sctp_tcb *stcb)
 	}
 }
 
+/*-
+ * check for forward_tsn parameter
+ */
+static int
+check_for_forward_tsn_support(struct mbuf *m, int offset, int limit)
+{
+	struct sctp_paramhdr *phdr, param_buf;
+	uint16_t ptype, plen;
+
+	phdr = sctp_get_next_param(m, offset, &param_buf, sizeof(param_buf));
+	while (phdr) {
+		ptype = ntohs(phdr->param_type);
+		plen = ntohs(phdr->param_length);
+
+		if (ptype == SCTP_PRSCTP_SUPPORTED) {
+		    return 1;
+		}
+
+		offset += SCTP_SIZE32(plen);
+		if (offset >= limit) {
+			break;
+		}
+		phdr = sctp_get_next_param(m, offset, &param_buf,
+		    sizeof(param_buf));
+	}
+	return 0;
+}
+
+
 /* INIT handler */
 static void
 sctp_handle_init(struct mbuf *m, int iphlen, int offset,
@@ -183,6 +212,13 @@ sctp_handle_init(struct mbuf *m, int iphlen, int offset,
 		if (stcb)
 			*abort_no_unlock = 1;
 		goto outnow;
+	}
+	/* check if we should include support for forward TSN or not */
+	if (!check_for_forward_tsn_support(m, offset + sizeof(*cp),
+				  offset + ntohs(cp->ch.chunk_length))
+	    && inp->prsctp_supported == 1) {
+	    SCTPDBG(SCTP_DEBUG_INPUT3, "sctp_handle_init: truning off PRSCTP support\n");
+	    inp->prsctp_supported=0;
 	}
 	/* We are only accepting if we have a listening socket.*/
 	if ((stcb == NULL) &&
