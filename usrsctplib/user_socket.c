@@ -3387,6 +3387,76 @@ usrsctp_conninput(void *addr, const void *buffer, size_t length, uint8_t ecn_bit
 	return;
 }
 
+int
+usrsctp_event_rcv_cb(struct socket *so, void (*rcv_cb)(struct socket *, void *), void *arg)
+{
+	struct sctp_inpcb *inp;
+   	
+	if (so == NULL) {
+		errno = EBADF;
+		return (-1);
+	}
+
+	inp = (struct sctp_inpcb *) so->so_pcb;
+	if (inp == NULL) {
+		return (-1);
+	}
+	SCTP_INP_WLOCK(inp);
+	inp->event_rcv_cb = rcv_cb;
+	inp->event_rcv_arg = arg;
+	SCTP_INP_WUNLOCK(inp);
+	return (1);
+}
+
+int
+usrsctp_event_snd_cb(struct socket *so, void (*snd_cb)(struct socket *, void *), void *arg)
+{
+	struct sctp_inpcb *inp;
+   	
+	if (so == NULL) {
+		errno = EBADF;
+		return (-1);
+	}
+
+	inp = (struct sctp_inpcb *) so->so_pcb;
+	if (inp == NULL) {
+		return (-1);
+	}
+
+	SCTP_INP_WLOCK(inp);
+	inp->event_snd_cb = snd_cb;
+	inp->event_snd_arg = arg;
+	SCTP_INP_WUNLOCK(inp);
+	return (1);
+}
+
+int
+usrsctp_readable(struct socket *so)
+{
+    if (so == NULL) {
+	errno = EBADF;
+	return -1;
+    }
+
+    if (soreadable(so))
+	return 1;
+
+    return 0;
+}
+
+int
+usrsctp_writeable(struct socket *so)
+{
+    if (so == NULL) {
+	errno = EBADF;
+	return -1;
+    }
+
+    if (sowriteable(so))
+	return 1;
+
+    return 0;
+}
 
 #define USRSCTP_SYSCTL_SET_DEF(__field) \
 void usrsctp_sysctl_set_ ## __field(uint32_t value) { \

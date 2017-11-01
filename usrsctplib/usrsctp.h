@@ -1020,6 +1020,18 @@ usrsctp_disable_crc32c_offload(void);
 uint32_t
 usrsctp_crc32c(void *, size_t);
 
+int
+usrsctp_event_rcv_cb(struct socket *so, void (*rcv_cb)(struct socket *, void *), void *arg);
+
+int
+usrsctp_event_snd_cb(struct socket *so, void (*snd_cb)(struct socket *, void *), void *arg);
+
+int
+usrsctp_readable(struct socket *so);
+
+int
+usrsctp_writeable(struct socket *so);
+
 #define USRSCTP_SYSCTL_DECL(__field)                \
 void usrsctp_sysctl_set_ ## __field(uint32_t value);\
 uint32_t usrsctp_sysctl_get_ ## __field(void);
