@@ -59,6 +59,7 @@
 #endif
 userland_mutex_t accept_mtx;
 userland_cond_t accept_cond;
+#include <stdarg.h>
 #ifdef _WIN32
 #include <time.h>
 #include <sys/timeb.h>
@@ -80,8 +81,17 @@ extern int sctpconn_attach(struct socket *so, int proto, uint32_t vrf_id);
 void
 usrsctp_init(uint16_t port,
              int (*conn_output)(void *addr, void *buffer, size_t length, uint8_t tos, uint8_t set_df),
-             void (*debug_printf)(const char *format, ...))
+             void (*debug_printf)(const char *format, ...),
+	     ...)
 {
+	int raw_socket[3];
+	int i;
+	va_list ap;
+
+	va_start(ap, debug_printf);
+	for (i=0; i<3; i++)
+	    raw_socket[i] = va_arg(ap, int);
+	va_end(ap);
 #if defined(__Userspace_os_Windows)
 #if defined(INET) || defined(INET6)
 	WSADATA wsaData;
@@ -104,7 +114,7 @@ usrsctp_init(uint16_t port,
 	pthread_mutexattr_destroy(&mutex_attr);
 	pthread_cond_init(&accept_cond, NULL);
 #endif
-	sctp_init(port, conn_output, debug_printf);
+	sctp_init(port, raw_socket[0], raw_socket[1], raw_socket[2], conn_output, debug_printf);
 }
 
 

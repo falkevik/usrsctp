@@ -446,7 +446,7 @@ void sctp_drain __P((void));
 void sctp_drain(void);
 #endif
 #if defined(__Userspace__)
-void sctp_init(uint16_t,
+void sctp_init(uint16_t, int, int, int,
                int (*)(void *addr, void *buffer, size_t length, uint8_t tos, uint8_t set_df),
                void (*)(const char *, ...));
 #elif defined(__FreeBSD__) && __FreeBSD_version < 902000

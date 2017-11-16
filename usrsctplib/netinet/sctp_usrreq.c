@@ -73,7 +73,7 @@ extern const struct sctp_ss_functions sctp_ss_functions[];
 
 void
 #if defined(__Userspace__)
-sctp_init(uint16_t port,
+sctp_init(uint16_t port, int raw_socket_ipv4, int raw_socket_ipv6, int raw_socket_route,
           int (*conn_output)(void *addr, void *buffer, size_t length, uint8_t tos, uint8_t set_df),
           void (*debug_printf)(const char *format, ...))
 #elif defined(__APPLE__) && (!defined(APPLE_LEOPARD) && !defined(APPLE_SNOWLEOPARD) &&!defined(APPLE_LION) && !defined(APPLE_MOUNTAINLION))
@@ -133,15 +133,15 @@ sctp_init(void)
 #if defined(__Userspace__)
 #if !defined(__Userspace_os_Windows)
 #if defined(INET) || defined(INET6)
-	SCTP_BASE_VAR(userspace_route) = -1;
+	SCTP_BASE_VAR(userspace_route) = raw_socket_route ? raw_socket_route : -1;
 #endif
 #endif
 #ifdef INET
-	SCTP_BASE_VAR(userspace_rawsctp) = -1;
+	SCTP_BASE_VAR(userspace_rawsctp) = raw_socket_ipv4 ? raw_socket_ipv4 : -1;
 	SCTP_BASE_VAR(userspace_udpsctp) = -1;
 #endif
 #ifdef INET6
-	SCTP_BASE_VAR(userspace_rawsctp6) = -1;
+	SCTP_BASE_VAR(userspace_rawsctp6) = raw_socket_ipv6 ? raw_socket_ipv6 : -1;
 	SCTP_BASE_VAR(userspace_udpsctp6) = -1;
 #endif
 	SCTP_BASE_VAR(timer_thread_should_exit) = 0;
