@@ -4081,7 +4081,7 @@ sctp_express_handle_sack(struct sctp_tcb *stcb, uint32_t cumack,
 
 	}
 #if defined(__Userspace__)
-	if (stcb->sctp_ep->recv_callback) {
+	if (stcb->sctp_ep->send_callback || stcb->sctp_ep->event_snd_cb) {
 		if (stcb->sctp_socket) {
 			uint32_t inqueue_bytes, sb_free_now;
 			struct sctp_inpcb *inp;
@@ -4091,14 +4091,16 @@ sctp_express_handle_sack(struct sctp_tcb *stcb, uint32_t cumack,
 			sb_free_now = SCTP_SB_LIMIT_SND(stcb->sctp_socket) - (inqueue_bytes + stcb->asoc.sb_send_resv);
 
 			/* check if the amount free in the send socket buffer crossed the threshold */
-			if (inp->send_callback &&
-			    (((inp->send_sb_threshold > 0) &&
+			if (((inp->send_sb_threshold > 0) &&
 			      (sb_free_now >= inp->send_sb_threshold) &&
 			      (stcb->asoc.chunks_on_out_queue <= SCTP_BASE_SYSCTL(sctp_max_chunks_on_queue))) ||
-			     (inp->send_sb_threshold == 0))) {
+			     (inp->send_sb_threshold == 0)) {
 				atomic_add_int(&stcb->asoc.refcnt, 1);
 				SCTP_TCB_UNLOCK(stcb);
-				inp->send_callback(stcb->sctp_socket, sb_free_now);
+				if(inp->send_callback)
+				    inp->send_callback(stcb->sctp_socket, sb_free_now);
+				if(inp->event_snd_cb)
+				    inp->event_snd_cb(stcb->sctp_socket, inp->event_snd_arg);
 				SCTP_TCB_LOCK(stcb);
 				atomic_subtract_int(&stcb->asoc.refcnt, 1);
 			}
@@ -4825,10 +4827,10 @@ sctp_handle_sack(struct mbuf *m, int offset_seg, int offset_dup,
 			    (inp->send_sb_threshold == 0))) {
 				atomic_add_int(&stcb->asoc.refcnt, 1);
 				SCTP_TCB_UNLOCK(stcb);
-				if(inp->event_snd_cb)
-				    inp->event_snd_cb(stcb->sctp_socket, inp->event_snd_arg);
 				if(inp->send_callback)
 				    inp->send_callback(stcb->sctp_socket, sb_free_now);
+				if(inp->event_snd_cb)
+				    inp->event_snd_cb(stcb->sctp_socket, inp->event_snd_arg);
 				SCTP_TCB_LOCK(stcb);
 				atomic_subtract_int(&stcb->asoc.refcnt, 1);
 			}
